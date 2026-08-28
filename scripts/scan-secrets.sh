@@ -17,7 +17,10 @@ if [ -d .next/static ] && grep -rIlE "$PATTERN" .next/static ; then
 else echo "  0건"; fi
 
 echo "== 3. Git 기록 =="
-if git rev-parse --git-dir >/dev/null 2>&1 && git log -p --all 2>/dev/null | grep -InE "$PATTERN" ; then
+# 점검 스크립트와 README의 예시 명령이 담긴 커밋은 제외합니다.
+if git rev-parse --git-dir >/dev/null 2>&1 \
+   && git log -p --all -- . ':(exclude)scripts/scan-secrets.sh' ':(exclude)README.md' 2>/dev/null \
+      | grep -InE "$PATTERN" ; then
   echo "  -> 검토 필요"; fail=1
 else echo "  0건"; fi
 

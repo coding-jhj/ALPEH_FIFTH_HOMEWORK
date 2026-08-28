@@ -8,6 +8,16 @@ import { loadBoard, storeFailure, storeSuccess } from '@/lib/store';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+/**
+ * GET도 같은 동작을 합니다.
+ * 하루 한 번 기록을 외부 스케줄러(또는 브라우저 주소창)에서 눌러 줄 수 있게 하기 위해서입니다.
+ * 인증을 걸지 않습니다 — 걸면 결과물 URL의 무로그인 공개 조건(T04-C01·C02·C29~C33)이 깨집니다.
+ * 부작용은 "오늘 날짜 행 1건 갱신"뿐이라 반복 호출해도 행이 늘지 않습니다 (T04-C20).
+ */
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   const provider = activeProvider();
   const now = new Date();

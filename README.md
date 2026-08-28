@@ -2,7 +2,8 @@
 
 공개 원천의 값 하나를 매일 한 줄로 기록하고, 어제와 비교하고, 데이터가 오지 않을 때는 실패 종류별로 다르게 설명하는 정보판입니다.
 
-- 원천: Steam 공개 통계 — 특정 게임의 현재 접속자 수 (인증 키 불필요)
+- 원천: **mcstatus.io** — 마인크래프트 공개 서버 `mc.hypixel.net`의 현재 접속자 수 (인증 키 불필요)
+- 교차 확인: mcsrvstat.us (화면 표시만, 저장하지 않음)
 - 기준 시간대: `Asia/Seoul`
 - 저장: Supabase Postgres, 고유키 `(signal_id, record_date)`
 
@@ -53,8 +54,8 @@ Supabase에서 `supabase/schema.sql`을 한 번 실행해 두 테이블을 만�
 |---|---|---|
 | `SUPABASE_URL` | 서버 전용 | Supabase 프로젝트 URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | 서버 전용 | 서버 라우트에서만 사용. 브라우저 번들에 포함되지 않습니다 |
-| `NEXT_PUBLIC_SIGNAL_PROVIDER` | 공개 | `steam` 또는 `open-meteo` |
-| `STEAM_APP_ID` | 서버 | 조회할 게임 appid (기본 730) |
+| `NEXT_PUBLIC_SIGNAL_PROVIDER` | 공개 | `mcstatus` 또는 `mcsrvstat` |
+| `MC_SERVER_HOST` | 서버 | 조회할 마크 서버 주소 (기본 `mc.hypixel.net`) |
 | `LIVE_DEADLINE_MS` | 서버 | 제한시간. 이 시간을 넘기면 `timeout`으로 기록 |
 
 비밀값은 `.env.local`에만 두며 저장소에 커밋하지 않습니다 (`.gitignore` 처리).
