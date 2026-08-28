@@ -1,95 +1,48 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import LiveBoard, { type BoardPayload } from '@/components/LiveBoard';
+import ReplayPanel from '@/components/ReplayPanel';
+import { activeProvider } from '@/lib/source';
+import { loadBoard } from '@/lib/store';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Page() {
+  const provider = activeProvider();
+  let board: BoardPayload | null = null;
+  let loadError: string | null = null;
+
+  try {
+    board = (await loadBoard(provider.signal_id)) as BoardPayload;
+  } catch (error) {
+    loadError = `저장소를 읽지 못했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`;
+  }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <main>
+      <p className="small" style={{ marginTop: 0 }}>
+        ALEPH T04 · 오늘의 진짜 정보판 — 데이터가 안 올 때
+      </p>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      <LiveBoard title={provider.title} initial={board} loadError={loadError} />
+      <ReplayPanel />
+
+      <section className="panel">
+        <h1>확인 방법</h1>
+        <ol style={{ paddingLeft: 20, margin: '8px 0 0' }}>
+          <li>위쪽 정보판에서 값·단위·출처·출처 시각·조회 시각·기준 시간대를 한눈에 봅니다.</li>
+          <li>
+            합성 검사 패널에서 <strong>회복</strong> 버튼을 누르면 D1-A → D1-B → TIMEOUT → RECOVER-D2가 차례로
+            재생됩니다.
+          </li>
+          <li>
+            실패 상태에서 마지막 정상값 105가 남고 <strong>오래된 값</strong> 표시가 붙는지, 다시 시도 뒤
+            fresh/none·행 2건·값 120이 되는지 확인합니다.
+          </li>
+        </ol>
+        <p className="small" style={{ marginTop: 12 }}>
+          이 화면에는 개인정보나 개인 기록이 없습니다. 외부 원천 호출은 서버 라우트에서만 일어나며 비밀키를 쓰지
+          않는 공개 원천만 사용합니다.
+        </p>
+      </section>
+    </main>
   );
 }
