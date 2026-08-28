@@ -3,6 +3,8 @@
  * README의 재생 순서를 그대로 돌려 각 fixture의 expected와 실제 상태를 비교합니다.
  * 실행: npm run verify
  */
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { FIXTURES } from '../src/lib/fixtures';
 import { resetEvaluationState, runFixture } from '../src/lib/replay';
 import type { BoardState } from '../src/lib/types';
@@ -43,7 +45,18 @@ function play(ids: string[]): BoardState {
   return state;
 }
 
-console.log('=== 1. 정상·일별 저장: reset → D1-A → D1-B → D2 ===');
+console.log('=== 0. fixture 사본 무결성: src/fixtures 와 public/fixtures 가 같은가 ===');
+{
+  const names = fs.readdirSync('src/fixtures').sort();
+  check('파일 개수', names.length, 9);
+  for (const name of names) {
+    const a = crypto.createHash('sha256').update(fs.readFileSync(`src/fixtures/${name}`)).digest('hex');
+    const b = crypto.createHash('sha256').update(fs.readFileSync(`public/fixtures/${name}`)).digest('hex');
+    check(`${name} 해시 일치`, a, b);
+  }
+}
+
+console.log('\n=== 1. 정상·일별 저장: reset → D1-A → D1-B → D2 ===');
 {
   let state = resetEvaluationState();
   state = runFixture(state, FIXTURES['T04-NORMAL-D1-A']);

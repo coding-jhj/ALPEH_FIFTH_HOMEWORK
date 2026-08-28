@@ -140,8 +140,10 @@ const DEADLINE_MS = Number(process.env.LIVE_DEADLINE_MS || 4000);
  * 실패 원인을 timeout / auth / rate_limit / offline / schema_error 로 나눠서 돌려줍니다.
  * (합성 재생과 완전히 같은 다섯 갈래입니다.)
  */
-export async function fetchLive(now = new Date()): Promise<LiveFetchResult> {
-  const provider = activeProvider();
+export async function fetchLive(
+  now = new Date(),
+  provider: SourceProvider = activeProvider(),
+): Promise<LiveFetchResult> {
   const url = provider.buildUrl();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DEADLINE_MS);

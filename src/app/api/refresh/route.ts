@@ -2,7 +2,7 @@
 // 브라우저는 이 라우트만 호출하므로 외부 원천 URL 외에 어떤 자격 증명도 브라우저로 나가지 않습니다.
 
 import { NextResponse } from 'next/server';
-import { activeProvider, fetchLive } from '@/lib/source';
+import { activeProvider, crossCheckProvider, fetchLive } from '@/lib/source';
 import { loadBoard, storeFailure, storeSuccess } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
@@ -47,10 +47,26 @@ export async function POST() {
     );
   }
 
+  // 교차 확인: 두 번째 공개 원천을 같이 찔러 보고 화면 표시용으로만 돌려줍니다.
+  // 저장하지 않습니다 — 영수증 신호는 반드시 하나여야 T04-C22가 성립합니다.
+  let crossCheck: { source_name: string; value: number | null; error_code: string } | null = null;
+  try {
+    const other = crossCheckProvider();
+    const cross = await fetchLive(now, other);
+    crossCheck = {
+      source_name: other.source_name,
+      value: cross.ok ? (cross.reading?.normalized_value ?? null) : null,
+      error_code: cross.error_code ?? 'none',
+    };
+  } catch {
+    crossCheck = null;
+  }
+
   const board = await loadBoard(provider.signal_id);
   return NextResponse.json({
     ok: result.ok,
     error_code: result.error_code ?? 'none',
+    cross_check: crossCheck,
     // 원자료·저장값·화면값 대조용 (T04-C10). 개인정보가 없는 공개 원천 응답만 담깁니다.
     raw_sample: result.raw ?? null,
     reading: result.reading ?? null,

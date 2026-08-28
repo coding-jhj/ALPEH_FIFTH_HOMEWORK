@@ -26,7 +26,8 @@ export function db(): SupabaseClient {
 export interface LiveBoard {
   rows: DailyRow[];
   current: DailyRow | null;
-  status: ReadingStatus;
+  /** null = 아직 한 번도 조회하지 않음. 실패(stale)와 반드시 구분합니다. */
+  status: ReadingStatus | null;
   comparison: Comparison;
   last_run_at: string | null;
   retry_after_seconds: number | null;
@@ -51,14 +52,16 @@ export async function loadBoard(signalId: string): Promise<LiveBoard> {
     .eq('signal_id', signalId)
     .maybeSingle();
 
-  const status: ReadingStatus = statusData
+  // 한 번도 조회하지 않은 상태를 실패로 표시하면 심사자가 첫 화면에서 거짓 오류를 봅니다.
+  // 기록이 없으면 status는 null로 두고, 화면에서 "아직 조회 전"으로 그립니다.
+  const status: ReadingStatus | null = statusData
     ? { freshness: statusData.freshness, error_code: statusData.error_code }
-    : { freshness: 'stale', error_code: 'offline' };
+    : null;
 
   return {
     rows,
     current,
-    status: rows.length === 0 && !statusData ? { freshness: 'stale', error_code: 'offline' } : status,
+    status,
     // 어제 대비는 저장하지 않고 매번 두 저장값에서 다시 계산합니다 (T04-C24).
     comparison: computeComparison(rows, current),
     last_run_at: statusData?.last_run_at ?? null,
