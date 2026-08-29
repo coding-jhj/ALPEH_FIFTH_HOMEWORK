@@ -235,3 +235,56 @@ a { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   button:active:not(:disabled) { transform: none; }
 }
+
+/* ---------------------------------------------------------- 인포그래픽 */
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; gap: 10px; } }
+
+.chart-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.chart-big { font-size: 22px; font-weight: 700; }
+
+.gauge, .bar { width: 100%; height: 16px; display: block; border: 2px solid var(--line); }
+.gauge-track { fill: var(--bg); }
+.gauge-fill { fill: var(--accent); }
+.gauge-fill-alt { fill: var(--muted); }
+
+.bar-row { display: grid; grid-template-columns: 108px 1fr 72px; gap: 8px; align-items: center; margin-top: 6px; }
+.bar-row .bar { height: 14px; }
+.bar-label { overflow-wrap: anywhere; }
+.bar-value { text-align: right; font-size: 13px; }
+
+.spark {
+  width: 100%;
+  height: 110px;
+  display: block;
+  border: 2px solid var(--line);
+  background: var(--bg);
+}
+.spark-line { fill: none; stroke: var(--accent); stroke-width: 2px; }
+.spark-area { fill: var(--accent); opacity: 0.16; }
+.spark-axis { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
+
+.matrix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+@media (max-width: 640px) { .matrix { grid-template-columns: repeat(2, 1fr); } }
+
+.matrix-cell {
+  border: 2px solid var(--line);
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--panel);
+}
+/* 활성 상태는 색만이 아니라 테두리 두께와 그림자로도 구분됩니다. */
+.matrix-cell.on { box-shadow: 4px 4px 0 var(--shadow); transform: translate(-2px, -2px); }
+.matrix-icon { font-size: 18px; line-height: 1; }
+.matrix-code { font-size: 10px; font-weight: 700; }
+.matrix-next { line-height: 1.35; }
+
+.matrix-cell[data-error='timeout'] { background: var(--e-timeout-bg); border-color: var(--e-timeout); color: var(--e-timeout); }
+.matrix-cell[data-error='auth'] { background: var(--e-auth-bg); border-color: var(--e-auth); color: var(--e-auth); }
+.matrix-cell[data-error='rate_limit'] { background: var(--e-rate-bg); border-color: var(--e-rate); color: var(--e-rate); }
+.matrix-cell[data-error='offline'] { background: var(--e-offline-bg); border-color: var(--e-offline); color: var(--e-offline); }
+.matrix-cell[data-error='schema_error'] { background: var(--e-schema-bg); border-color: var(--e-schema); color: var(--e-schema); }
+.matrix-cell .small { color: inherit; opacity: 0.9; }

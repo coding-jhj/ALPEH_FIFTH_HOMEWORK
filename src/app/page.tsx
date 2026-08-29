@@ -1,17 +1,20 @@
 import LiveBoard, { type BoardPayload } from '@/components/LiveBoard';
 import ReplayPanel from '@/components/ReplayPanel';
 import { activeProvider } from '@/lib/source';
-import { loadBoard } from '@/lib/store';
+import type { Observation } from '@/lib/types';
+import { loadBoard, loadObservations } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const provider = activeProvider();
   let board: BoardPayload | null = null;
+  let observations: Observation[] = [];
   let loadError: string | null = null;
 
   try {
     board = (await loadBoard(provider.signal_id)) as BoardPayload;
+    observations = await loadObservations(provider.signal_id);
   } catch (error) {
     // 공개 심사 화면에 내부 오류 문구를 그대로 노출하지 않습니다.
     console.error('[T04] 초기 조회 실패', error);
@@ -24,7 +27,12 @@ export default async function Page() {
         ALEPH T04 · 오늘의 진짜 정보판 — 데이터가 안 올 때
       </p>
 
-      <LiveBoard title={provider.title} initial={board} loadError={loadError} />
+      <LiveBoard
+        title={provider.title}
+        initial={board}
+        initialObservations={observations}
+        loadError={loadError}
+      />
       <ReplayPanel />
 
       <section className="panel">

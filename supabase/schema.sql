@@ -28,3 +28,21 @@ create table if not exists reading_status (
 -- 공개 심사 화면은 서버 라우트를 통해서만 읽고 쓰므로 anon 직접 접근은 막아 둡니다.
 alter table daily_readings enable row level security;
 alter table reading_status enable row level security;
+
+-- 관측 로그 — 조회할 때마다 한 줄씩 쌓는 시계열입니다.
+-- daily_readings와 완전히 분리돼 있어 일별 저장 규칙(T04-C17/C20/C21)에 영향을 주지 않습니다.
+create table if not exists observations (
+  id               bigserial primary key,
+  signal_id        text not null,
+  normalized_value double precision not null,
+  capacity         double precision,
+  unit             text not null,
+  source_name      text not null,
+  source_time      timestamptz,
+  observed_at      timestamptz not null default now()
+);
+
+create index if not exists observations_signal_time_idx
+  on observations (signal_id, observed_at desc);
+
+alter table observations enable row level security;

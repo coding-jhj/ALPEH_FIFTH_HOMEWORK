@@ -14,7 +14,10 @@ export interface SourceProvider {
   source_name: string;
   buildUrl(): string;
   /** 원자료(JSON) + 응답 Date 헤더 → 정규화 값 */
-  extract(raw: unknown, responseDate: string | null): { value: number; source_time: string | null };
+  extract(
+    raw: unknown,
+    responseDate: string | null,
+  ): { value: number; source_time: string | null; capacity: number | null };
 }
 
 const SERVER_HOST = process.env.MC_SERVER_HOST || 'mc.hypixel.net';
@@ -35,7 +38,7 @@ const mcStatusIo: SourceProvider = {
   extract(raw, responseDate) {
     const body = raw as {
       online?: unknown;
-      players?: { online?: unknown };
+      players?: { online?: unknown; max?: unknown };
       retrieved_at?: unknown;
     };
     // 서버가 내려가 있으면 online:false 로 오고 접속자 수는 의미가 없습니다.
@@ -47,8 +50,10 @@ const mcStatusIo: SourceProvider = {
       throw new Error('players.online이 숫자가 아닙니다');
     }
     const retrievedAt = body?.retrieved_at;
+    const max = body?.players?.max;
     return {
       value: count,
+      capacity: typeof max === 'number' && Number.isFinite(max) ? max : null,
       source_time:
         typeof retrievedAt === 'number' && Number.isFinite(retrievedAt)
           ? new Date(retrievedAt).toISOString()
@@ -72,7 +77,7 @@ const mcSrvStat: SourceProvider = {
   extract(raw, responseDate) {
     const body = raw as {
       online?: unknown;
-      players?: { online?: unknown };
+      players?: { online?: unknown; max?: unknown };
       debug?: { cachetime?: unknown };
     };
     if (body?.online === false) {
@@ -83,8 +88,10 @@ const mcSrvStat: SourceProvider = {
       throw new Error('players.online이 숫자가 아닙니다');
     }
     const cacheTime = body?.debug?.cachetime;
+    const max = body?.players?.max;
     return {
       value: count,
+      capacity: typeof max === 'number' && Number.isFinite(max) ? max : null,
       source_time:
         typeof cacheTime === 'number' && Number.isFinite(cacheTime)
           ? new Date(cacheTime * 1000).toISOString()
@@ -129,6 +136,8 @@ export interface LiveFetchResult {
   reading?: NormalizedReading;
   error_code?: ErrorCode;
   raw?: unknown;
+  /** 정원(players.max). 정규화 9필드 밖의 부가 정보라 일별 행에는 저장하지 않습니다. */
+  capacity?: number | null;
   http_status?: number | null;
   retry_after_seconds?: number | null;
 }
@@ -188,7 +197,7 @@ export async function fetchLive(
     return { ok: false, error_code: 'schema_error', http_status: response.status };
   }
 
-  let extracted: { value: number; source_time: string | null };
+  let extracted: { value: number; source_time: string | null; capacity: number | null };
   try {
     extracted = provider.extract(raw, response.headers.get('date'));
   } catch {
@@ -209,5 +218,11 @@ export async function fetchLive(
   };
 
   // 원자료를 돌려줄 때도 개인 식별 가능 필드는 제거한 뒤 내보냅니다.
-  return { ok: true, reading, raw: redactRaw(raw), http_status: response.status };
+  return {
+    ok: true,
+    reading,
+    capacity: extracted.capacity,
+    raw: redactRaw(raw),
+    http_status: response.status,
+  };
 }

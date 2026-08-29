@@ -4,7 +4,14 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { computeComparison, rowFromReading } from './core';
-import type { Comparison, DailyRow, ErrorCode, NormalizedReading, ReadingStatus } from './types';
+import type {
+  Comparison,
+  DailyRow,
+  ErrorCode,
+  NormalizedReading,
+  Observation,
+  ReadingStatus,
+} from './types';
 
 let client: SupabaseClient | null = null;
 
@@ -179,4 +186,45 @@ export async function storeFailure(
     { onConflict: 'signal_id' },
   );
   if (error) throw new Error(error.message);
+}
+
+/**
+ * 관측 로그 한 줄 추가 — 그래프 전용입니다.
+ * daily_readings와 분리돼 있어 실패 보존·하루 한 줄 규칙에 영향을 주지 않습니다.
+ * 테이블이 아직 없어도 앱이 죽지 않도록 실패를 삼킵니다 (스키마 마이그레이션 전 상태 대비).
+ */
+export async function recordObservation(
+  reading: NormalizedReading,
+  capacity: number | null,
+): Promise<void> {
+  try {
+    const { error } = await db().from('observations').insert({
+      signal_id: reading.signal_id,
+      normalized_value: reading.normalized_value,
+      capacity,
+      unit: reading.unit,
+      source_name: reading.source_name,
+      source_time: reading.source_time,
+      observed_at: reading.fetched_at,
+    });
+    if (error) console.error('[T04] 관측 로그 저장 실패', error.message);
+  } catch (error) {
+    console.error('[T04] 관측 로그 저장 실패', error);
+  }
+}
+
+/** 최근 관측 N건을 오래된 순으로 돌려줍니다. 테이블이 없으면 빈 배열입니다. */
+export async function loadObservations(signalId: string, limit = 60): Promise<Observation[]> {
+  try {
+    const { data, error } = await db()
+      .from('observations')
+      .select('observed_at, normalized_value, capacity, unit, source_name')
+      .eq('signal_id', signalId)
+      .order('observed_at', { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return ((data ?? []) as Observation[]).slice().reverse();
+  } catch {
+    return [];
+  }
 }

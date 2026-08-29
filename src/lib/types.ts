@@ -44,6 +44,15 @@ export interface DailyRow {
   last_fetched_at: string;
 }
 
+/** 관측 로그 한 줄 — 시계열 그래프 전용. 일별 저장과 별개입니다. */
+export interface Observation {
+  observed_at: string;
+  normalized_value: number;
+  capacity: number | null;
+  unit: string;
+  source_name: string;
+}
+
 export type ComparisonState = 'insufficient' | 'unit_mismatch' | 'comparable';
 
 /** 어제 대비 비교 결과 — 저장하지 않고 두 저장값에서 매번 재계산합니다 (T04-C24) */

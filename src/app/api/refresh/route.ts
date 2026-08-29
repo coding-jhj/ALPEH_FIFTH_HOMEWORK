@@ -3,7 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { activeProvider, crossCheckProvider, fetchLive, type LiveFetchResult } from '@/lib/source';
-import { loadBoard, storeFailure, storeSuccess } from '@/lib/store';
+import { loadBoard, loadObservations, recordObservation, storeFailure, storeSuccess } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -33,6 +33,8 @@ export async function POST() {
   try {
     if (result.ok && result.reading) {
       storeOutcome = await storeSuccess(result.reading);
+      // 그래프용 시계열은 저장 잠금·날짜 상한과 무관하게 매번 한 줄 남깁니다.
+      await recordObservation(result.reading, result.capacity ?? null);
     } else {
       await storeFailure(
         provider.signal_id,
@@ -71,6 +73,8 @@ export async function POST() {
       { status: 500 },
     );
   }
+  const observations = await loadObservations(provider.signal_id);
+
   return NextResponse.json({
     ok: result.ok,
     error_code: result.error_code ?? 'none',
@@ -80,6 +84,8 @@ export async function POST() {
     // 원자료·저장값·화면값 대조용 (T04-C10). 개인정보가 없는 공개 원천 응답만 담깁니다.
     raw_sample: result.raw ?? null,
     reading: result.reading ?? null,
+    capacity: result.capacity ?? null,
+    observations,
     board,
   });
 }

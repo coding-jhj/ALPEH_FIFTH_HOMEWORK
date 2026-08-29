@@ -4,7 +4,8 @@
 
 import { useState } from 'react';
 import { FAILURE_COPY, kstDateTime } from '@/lib/core';
-import type { Comparison, DailyRow, ErrorCode, ReadingStatus } from '@/lib/types';
+import { CapacityGauge, FailureMatrix, SourceCompare, Sparkline } from './Charts';
+import type { Comparison, DailyRow, ErrorCode, Observation, ReadingStatus } from '@/lib/types';
 
 export interface BoardPayload {
   rows: DailyRow[];
@@ -44,16 +45,19 @@ function hhmmKst(iso: string): string {
 interface Props {
   title: string;
   initial: BoardPayload | null;
+  initialObservations: Observation[];
   loadError: string | null;
 }
 
 const DIRECTION_MARK = { increase: '▲', decrease: '▼', unchanged: '＝' } as const;
 
-export default function LiveBoard({ title, initial, loadError }: Props) {
+export default function LiveBoard({ title, initial, initialObservations, loadError }: Props) {
   const [board, setBoard] = useState<BoardPayload | null>(initial);
+  const [observations, setObservations] = useState<Observation[]>(initialObservations);
   const [raw, setRaw] = useState<unknown>(null);
   const [crossCheck, setCrossCheck] = useState<CrossCheck | null>(null);
   const [storeOutcome, setStoreOutcome] = useState<string | null>(null);
+  const [capacity, setCapacity] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(loadError);
 
@@ -67,6 +71,8 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
       if (data.raw_sample) setRaw(data.raw_sample);
       setCrossCheck(data.cross_check ?? null);
       setStoreOutcome(data.store_outcome ?? null);
+      if (Array.isArray(data.observations)) setObservations(data.observations);
+      setCapacity(typeof data.capacity === 'number' ? data.capacity : null);
       if (!response.ok) setMessage(data.message ?? '조회에 실패했습니다.');
     } catch {
       setMessage('조회 요청 자체가 실패했습니다. 네트워크를 확인하세요.');
@@ -106,6 +112,9 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
         })()
       : null;
   const compareGapWarn = compareGapMinutes !== null && compareGapMinutes > 60;
+
+  // 조회 직후에는 응답의 정원을, 새로고침 뒤에는 마지막 관측의 정원을 씁니다.
+  const latestCapacity = observations.length > 0 ? observations[observations.length - 1].capacity : null;
 
   // T04-C22는 실제 날짜 기록이 정확히 2건일 것을 봅니다.
   const rowCount = board?.rows.length ?? 0;
@@ -276,6 +285,39 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
       </div>
 
       {message && <div className="notice">{message}</div>}
+
+      <h2 style={{ marginTop: 26 }}>관측 시계열</h2>
+      <Sparkline points={observations} unit={current?.unit ?? '명'} />
+
+      <div className="grid2">
+        <div>
+          <h2 style={{ marginTop: 20 }}>서버 점유율</h2>
+          {current ? (
+            <CapacityGauge
+              value={current.normalized_value}
+              capacity={capacity ?? latestCapacity}
+              unit={current.unit}
+            />
+          ) : (
+            <p className="small">조회 전입니다.</p>
+          )}
+        </div>
+        <div>
+          <h2 style={{ marginTop: 20 }}>두 원천 대조</h2>
+          <SourceCompare
+            primary={{ name: current?.source_name ?? '저장 원천', value: current?.normalized_value ?? 0 }}
+            secondary={
+              crossCheck && crossCheck.value !== null
+                ? { name: crossCheck.source_name, value: crossCheck.value }
+                : null
+            }
+            unit={current?.unit ?? '명'}
+          />
+        </div>
+      </div>
+
+      <h2 style={{ marginTop: 24 }}>데이터가 안 올 때 — 다섯 갈래</h2>
+      <FailureMatrix active={stale ? (status?.error_code ?? null) : null} />
 
       <h2 style={{ marginTop: 24 }}>일별 기록 (KST 날짜별 한 건)</h2>
       <div className="scroll">
