@@ -69,23 +69,63 @@ export async function loadBoard(signalId: string): Promise<LiveBoard> {
   };
 }
 
-/** 성공 저장: upsert 한 번으로 같은 날 중복 행을 막습니다. */
-export async function storeSuccess(reading: NormalizedReading): Promise<void> {
+/**
+ * 저장 결과.
+ * stored   = 일별 행을 쓰거나 갱신했다
+ * locked   = RECORD_LOCKED=true — 조회는 했지만 저장값을 건드리지 않았다 (T04-C23)
+ * date_cap = 서로 다른 실제 날짜 기록이 이미 2건이라 새 날짜 행을 만들지 않았다 (T04-C22)
+ */
+export type StoreOutcome = 'stored' | 'locked' | 'date_cap';
+
+/** 봉인 뒤 저장값 동결 스위치. 2일차 영수증을 봉인한 다음 켭니다. */
+export function recordLocked(): boolean {
+  return process.env.RECORD_LOCKED === 'true';
+}
+
+/** 쓰기 여부 판정만 떼어 낸 순수 함수 — DB 없이 시험합니다. */
+export function storeDecision(opts: {
+  locked: boolean;
+  rowExists: boolean;
+  distinctDates: number;
+}): StoreOutcome {
+  if (opts.locked) return 'locked';
+  if (!opts.rowExists && opts.distinctDates >= 2) return 'date_cap';
+  return 'stored';
+}
+
+/**
+ * 성공 저장: upsert 한 번으로 같은 날 중복 행을 막습니다.
+ * 봉인된 영수증 payload와 저장값이 어긋나지 않도록 두 가지를 막습니다.
+ *  - RECORD_LOCKED=true 면 일별 행을 아예 쓰지 않습니다 (T04-C23).
+ *  - 서로 다른 날짜가 이미 2건이면 세 번째 날짜 행을 만들지 않습니다 (T04-C22).
+ * 두 경우 모두 조회 자체는 성공이므로 status는 fresh/none으로 갱신합니다.
+ */
+export async function storeSuccess(reading: NormalizedReading): Promise<StoreOutcome> {
   const supabase = db();
+  const locked = recordLocked();
 
-  const { data: existingData } = await supabase
-    .from('daily_readings')
-    .select('*')
-    .eq('signal_id', reading.signal_id)
-    .eq('record_date', reading.record_date)
-    .maybeSingle();
+  let existing: DailyRow | null = null;
+  let distinctDates = 0;
+  if (!locked) {
+    const { data: dateRows, error: dateError } = await supabase
+      .from('daily_readings')
+      .select('*')
+      .eq('signal_id', reading.signal_id);
+    if (dateError) throw new Error(dateError.message);
+    const rows = (dateRows ?? []) as DailyRow[];
+    existing = rows.find((r) => String(r.record_date) === reading.record_date) ?? null;
+    distinctDates = new Set(rows.map((r) => String(r.record_date))).size;
+  }
 
-  const row = rowFromReading(reading, (existingData as DailyRow | null) ?? null);
+  const outcome = storeDecision({ locked, rowExists: existing !== null, distinctDates });
 
-  const { error } = await supabase
-    .from('daily_readings')
-    .upsert(row, { onConflict: 'signal_id,record_date' });
-  if (error) throw new Error(error.message);
+  if (outcome === 'stored') {
+    const row = rowFromReading(reading, existing);
+    const { error } = await supabase
+      .from('daily_readings')
+      .upsert(row, { onConflict: 'signal_id,record_date' });
+    if (error) throw new Error(error.message);
+  }
 
   await supabase.from('reading_status').upsert(
     {
@@ -97,6 +137,8 @@ export async function storeSuccess(reading: NormalizedReading): Promise<void> {
     },
     { onConflict: 'signal_id' },
   );
+
+  return outcome;
 }
 
 /** 실패 기록: status만 갱신합니다. daily_readings는 읽지도 쓰지도 않습니다. */

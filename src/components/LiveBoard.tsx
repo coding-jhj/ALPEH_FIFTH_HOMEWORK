@@ -53,6 +53,7 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
   const [board, setBoard] = useState<BoardPayload | null>(initial);
   const [raw, setRaw] = useState<unknown>(null);
   const [crossCheck, setCrossCheck] = useState<CrossCheck | null>(null);
+  const [storeOutcome, setStoreOutcome] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(loadError);
 
@@ -65,6 +66,7 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
       if (data.board) setBoard(data.board);
       if (data.raw_sample) setRaw(data.raw_sample);
       setCrossCheck(data.cross_check ?? null);
+      setStoreOutcome(data.store_outcome ?? null);
       if (!response.ok) setMessage(data.message ?? '조회에 실패했습니다.');
     } catch {
       setMessage('조회 요청 자체가 실패했습니다. 네트워크를 확인하세요.');
@@ -93,9 +95,15 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
     comparison?.previous_record_date
       ? (board?.rows ?? []).find((r) => r.record_date === comparison.previous_record_date)
       : undefined;
+  // 자정을 사이에 두면 단순 차이가 뒤집힙니다. 23:50 vs 00:10 은 1420분이 아니라 20분 차입니다.
   const compareGapMinutes =
     previousRow && current
-      ? Math.abs(minutesOfDayKst(current.last_fetched_at) - minutesOfDayKst(previousRow.last_fetched_at))
+      ? (() => {
+          const raw = Math.abs(
+            minutesOfDayKst(current.last_fetched_at) - minutesOfDayKst(previousRow.last_fetched_at),
+          );
+          return Math.min(raw, 1440 - raw);
+        })()
       : null;
   const compareGapWarn = compareGapMinutes !== null && compareGapMinutes > 60;
 
@@ -226,6 +234,20 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
           )}
         </dd>
       </dl>
+
+      {storeOutcome === 'locked' && (
+        <div className="notice">
+          <strong>기록 잠금</strong>
+          제출 근거 2건을 봉인한 뒤라 저장값을 더 바꾸지 않습니다. 위 조회는 실제로 실행되었고 아래 원자료가 그
+          응답입니다. 표시된 <strong>저장값</strong>은 봉인 시점 값 그대로입니다.
+        </div>
+      )}
+      {storeOutcome === 'date_cap' && (
+        <div className="notice">
+          <strong>일별 기록 2건 상한</strong>
+          서로 다른 실제 날짜 기록이 이미 2건이라 세 번째 날짜 행을 만들지 않았습니다. 조회 자체는 성공했습니다.
+        </div>
+      )}
 
       {rowCount > 2 && (
         <div className="notice">

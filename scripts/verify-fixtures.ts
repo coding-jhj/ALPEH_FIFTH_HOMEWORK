@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { FIXTURES } from '../src/lib/fixtures';
 import { resetEvaluationState, runFixture } from '../src/lib/replay';
+import { storeDecision } from '../src/lib/store';
 import type { BoardState } from '../src/lib/types';
 
 let failures = 0;
@@ -115,6 +116,15 @@ console.log('\n=== 5. 다섯 실패가 서로 다른 error_code인지 (T04-C12~C
   );
   check('error_code 5종', codes, ['timeout', 'auth', 'rate_limit', 'offline', 'schema_error']);
   check('중복 없음', new Set(codes).size, 5);
+}
+
+console.log('\n=== 6. store write decision (T04-C22/C23 guard) ===');
+{
+  check('locked -> no write', storeDecision({ locked: true, rowExists: true, distinctDates: 1 }), 'locked');
+  check('same date -> update', storeDecision({ locked: false, rowExists: true, distinctDates: 2 }), 'stored');
+  check('1st date -> store', storeDecision({ locked: false, rowExists: false, distinctDates: 0 }), 'stored');
+  check('2nd date -> store', storeDecision({ locked: false, rowExists: false, distinctDates: 1 }), 'stored');
+  check('3rd date -> blocked', storeDecision({ locked: false, rowExists: false, distinctDates: 2 }), 'date_cap');
 }
 
 console.log(`\n${failures === 0 ? '전부 통과' : `실패 ${failures}건`}`);

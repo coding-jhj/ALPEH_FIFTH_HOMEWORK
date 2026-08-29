@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# 값이 비어 있는 예시 파일은 저장소에 있어야 합니다 (README의 cp .env.example 절차)
+!.env.example
 
 # vercel
 .vercel

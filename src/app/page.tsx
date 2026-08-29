@@ -13,7 +13,9 @@ export default async function Page() {
   try {
     board = (await loadBoard(provider.signal_id)) as BoardPayload;
   } catch (error) {
-    loadError = `저장소를 읽지 못했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`;
+    // 공개 심사 화면에 내부 오류 문구를 그대로 노출하지 않습니다.
+    console.error('[T04] 초기 조회 실패', error);
+    loadError = '저장소를 읽지 못했습니다. 아래 조회 버튼을 눌러 다시 시도하세요.';
   }
 
   return (
