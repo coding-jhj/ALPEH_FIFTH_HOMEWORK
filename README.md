@@ -162,6 +162,24 @@ Supabase에서 `supabase/schema.sql`을 한 번 실행해 두 테이블을 만�
 </details>
 
 <details>
+<summary><b>하루 한 번 자동 기록 (Vercel Cron)</b></summary>
+
+`vercel.json`이 매일 **12:00 UTC = 21:00 KST**에 `/api/refresh`를 한 번 호출합니다.
+화면의 「기준 기록 시각 21:00 KST 근처」와 같은 시각이라 두 날짜의 측정 조건이 어긋나지 않습니다.
+
+```json
+{ "crons": [{ "path": "/api/refresh", "schedule": "0 12 * * *" }] }
+```
+
+- 반복 호출해도 같은 KST 날짜에는 행이 늘지 않습니다 (`(signal_id, record_date)` 유니크).
+- 서로 다른 날짜가 2건이 되면 `date_cap`으로 세 번째 날짜 행을 만들지 않습니다.
+- 즉 **켜 두면 첫 이틀치가 자동으로 쌓이고 그 뒤로는 저절로 멈춥니다.**
+
+Vercel Hobby 요금제는 하루 1회 cron까지 무료입니다.
+
+</details>
+
+<details>
 <summary><b>비밀값·개인정보 점검</b></summary>
 
 ```bash
