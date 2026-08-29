@@ -73,7 +73,7 @@ export async function loadBoard(signalId: string): Promise<LiveBoard> {
  * 저장 결과.
  * stored   = 일별 행을 쓰거나 갱신했다
  * locked   = RECORD_LOCKED=true — 조회는 했지만 저장값을 건드리지 않았다 (T04-C23)
- * date_cap = 서로 다른 실제 날짜 기록이 이미 2건이라 새 날짜 행을 만들지 않았다 (T04-C22)
+ * date_cap = MAX_RECORD_DATES 상한에 걸려 새 날짜 행을 만들지 않았다
  */
 export type StoreOutcome = 'stored' | 'locked' | 'date_cap';
 
@@ -82,14 +82,28 @@ export function recordLocked(): boolean {
   return process.env.RECORD_LOCKED === 'true';
 }
 
+/**
+ * 보존할 서로 다른 날짜 수의 상한. 비워 두면 무제한으로 매일 쌓습니다.
+ * 앱 저장 기록 자체를 2건으로 묶고 싶을 때만 2를 넣습니다.
+ */
+export function maxRecordDates(): number | null {
+  const raw = process.env.MAX_RECORD_DATES;
+  if (!raw || raw.trim() === '') return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 /** 쓰기 여부 판정만 떼어 낸 순수 함수 — DB 없이 시험합니다. */
 export function storeDecision(opts: {
   locked: boolean;
   rowExists: boolean;
   distinctDates: number;
+  maxDates: number | null;
 }): StoreOutcome {
   if (opts.locked) return 'locked';
-  if (!opts.rowExists && opts.distinctDates >= 2) return 'date_cap';
+  if (!opts.rowExists && opts.maxDates !== null && opts.distinctDates >= opts.maxDates) {
+    return 'date_cap';
+  }
   return 'stored';
 }
 
@@ -97,7 +111,7 @@ export function storeDecision(opts: {
  * 성공 저장: upsert 한 번으로 같은 날 중복 행을 막습니다.
  * 봉인된 영수증 payload와 저장값이 어긋나지 않도록 두 가지를 막습니다.
  *  - RECORD_LOCKED=true 면 일별 행을 아예 쓰지 않습니다 (T04-C23).
- *  - 서로 다른 날짜가 이미 2건이면 세 번째 날짜 행을 만들지 않습니다 (T04-C22).
+ *  - MAX_RECORD_DATES를 넘는 새 날짜 행은 만들지 않습니다 (기본값 무제한).
  * 두 경우 모두 조회 자체는 성공이므로 status는 fresh/none으로 갱신합니다.
  */
 export async function storeSuccess(reading: NormalizedReading): Promise<StoreOutcome> {
@@ -117,7 +131,12 @@ export async function storeSuccess(reading: NormalizedReading): Promise<StoreOut
     distinctDates = new Set(rows.map((r) => String(r.record_date))).size;
   }
 
-  const outcome = storeDecision({ locked, rowExists: existing !== null, distinctDates });
+  const outcome = storeDecision({
+    locked,
+    rowExists: existing !== null,
+    distinctDates,
+    maxDates: maxRecordDates(),
+  });
 
   if (outcome === 'stored') {
     const row = rowFromReading(reading, existing);

@@ -120,11 +120,15 @@ console.log('\n=== 5. 다섯 실패가 서로 다른 error_code인지 (T04-C12~C
 
 console.log('\n=== 6. store write decision (T04-C22/C23 guard) ===');
 {
-  check('locked -> no write', storeDecision({ locked: true, rowExists: true, distinctDates: 1 }), 'locked');
-  check('same date -> update', storeDecision({ locked: false, rowExists: true, distinctDates: 2 }), 'stored');
-  check('1st date -> store', storeDecision({ locked: false, rowExists: false, distinctDates: 0 }), 'stored');
-  check('2nd date -> store', storeDecision({ locked: false, rowExists: false, distinctDates: 1 }), 'stored');
-  check('3rd date -> blocked', storeDecision({ locked: false, rowExists: false, distinctDates: 2 }), 'date_cap');
+  const cap2 = { locked: false, maxDates: 2 };
+  const nocap = { locked: false, maxDates: null };
+  check('locked -> no write', storeDecision({ locked: true, rowExists: true, distinctDates: 1, maxDates: null }), 'locked');
+  check('same date -> update', storeDecision({ ...cap2, rowExists: true, distinctDates: 2 }), 'stored');
+  check('cap 2: 1st date -> store', storeDecision({ ...cap2, rowExists: false, distinctDates: 0 }), 'stored');
+  check('cap 2: 2nd date -> store', storeDecision({ ...cap2, rowExists: false, distinctDates: 1 }), 'stored');
+  check('cap 2: 3rd date -> blocked', storeDecision({ ...cap2, rowExists: false, distinctDates: 2 }), 'date_cap');
+  check('no cap: 3rd date -> store', storeDecision({ ...nocap, rowExists: false, distinctDates: 2 }), 'stored');
+  check('no cap: 30th date -> store', storeDecision({ ...nocap, rowExists: false, distinctDates: 29 }), 'stored');
 }
 
 console.log(`\n${failures === 0 ? '전부 통과' : `실패 ${failures}건`}`);

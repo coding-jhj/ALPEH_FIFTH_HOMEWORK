@@ -138,6 +138,7 @@ Supabase에서 `supabase/schema.sql`을 한 번 실행해 두 테이블을 만�
 | `MC_SERVER_HOST` | 서버 | 조회할 마크 서버 주소 (기본 `mc.hypixel.net`) |
 | `LIVE_DEADLINE_MS` | 서버 | 제한시간. 이 시간을 넘기면 `timeout`으로 기록 |
 | `RECORD_LOCKED` | 서버 | `true`면 조회는 하되 일별 저장값을 쓰지 않습니다 |
+| `MAX_RECORD_DATES` | 서버 | 보존할 서로 다른 날짜 수 상한. 비우면 무제한 (기본) |
 
 비밀값은 `.env.local`에만 두며 저장소에 커밋하지 않습니다 (`.gitignore` 처리).
 
@@ -153,8 +154,11 @@ Supabase에서 `supabase/schema.sql`을 한 번 실행해 두 테이블을 만�
 | 상황 | 결과 | 화면 |
 |---|---|---|
 | 평소 | `stored` — 같은 날은 갱신, 새 날짜는 새 행 | 평소 화면 |
-| 서로 다른 날짜가 이미 2건 | `date_cap` — 세 번째 날짜 행을 만들지 않음 | 「일별 기록 2건 상한」 |
+| `MAX_RECORD_DATES` 도달 | `date_cap` — 새 날짜 행을 만들지 않음 (기본값 무제한) | 「일별 기록 상한」 |
 | `RECORD_LOCKED=true` | `locked` — 일별 행을 아예 쓰지 않음 | 「기록 잠금」 |
+
+기록은 기본적으로 **매일 계속 쌓입니다.** 화면의 어제 대비는 언제나 최신 두 날짜로 계산하므로,
+증빙 2건도 마지막 이틀에 하나씩 남기고 두 번째 직후 `RECORD_LOCKED=true`로 저장을 멈추면 재계산값이 맞습니다.
 
 두 경우 모두 **조회 자체는 실제로 실행**되고 원자료도 그대로 보여 줍니다. 저장값만 고정됩니다.
 판정 로직은 `storeDecision()` 순수 함수이며 `npm run verify` 6번 항목이 다섯 갈래를 전부 시험합니다.
@@ -172,8 +176,8 @@ Supabase에서 `supabase/schema.sql`을 한 번 실행해 두 테이블을 만�
 ```
 
 - 반복 호출해도 같은 KST 날짜에는 행이 늘지 않습니다 (`(signal_id, record_date)` 유니크).
-- 서로 다른 날짜가 2건이 되면 `date_cap`으로 세 번째 날짜 행을 만들지 않습니다.
-- 즉 **켜 두면 첫 이틀치가 자동으로 쌓이고 그 뒤로는 저절로 멈춥니다.**
+- 기본값은 무제한이라 **켜 두면 매일 한 줄씩 계속 쌓입니다.**
+- 멈추고 싶으면 `RECORD_LOCKED=true`, 날짜 수를 묶고 싶으면 `MAX_RECORD_DATES`를 씁니다.
 
 Vercel Hobby 요금제는 하루 1회 cron까지 무료입니다.
 

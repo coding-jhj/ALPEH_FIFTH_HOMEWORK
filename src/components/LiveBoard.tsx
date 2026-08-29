@@ -212,7 +212,7 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
         <dd className="pixel">
           {kstDateTime(current?.last_fetched_at ?? board?.last_run_at ?? null)}
           {cacheLagSeconds !== null && (
-            <span className="small"> · 캐시 지연 {cacheLagSeconds}초 (출처가 관측한 시각과의 차이)</span>
+            <span className="small"> · 출처 시각과 {Math.abs(cacheLagSeconds)}초 차이</span>
           )}
         </dd>
         <dt>기준 시간대</dt>
@@ -255,16 +255,17 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
       )}
       {storeOutcome === 'date_cap' && (
         <div className="notice">
-          <strong>일별 기록 2건 상한</strong>
-          서로 다른 실제 날짜 기록이 이미 2건이라 세 번째 날짜 행을 만들지 않았습니다. 조회 자체는 성공했습니다.
+          <strong>일별 기록 상한</strong>
+          설정한 보존 날짜 수(<code>MAX_RECORD_DATES</code>)에 도달해 새 날짜 행을 만들지 않았습니다. 조회 자체는
+          성공했습니다.
         </div>
       )}
 
       {rowCount > 2 && (
         <div className="notice">
-          <strong>일별 기록이 {rowCount}건입니다</strong>
-          제출 조건은 서로 다른 실제 날짜 기록 <strong>정확히 2건</strong>을 봅니다. 3건 이상 쌓였다면 어느 2건을
-          제출 근거로 삼을지 정하고, 필요하면 나머지 행을 정리하세요.
+          <strong>일별 기록 {rowCount}건 — 제출 근거는 가장 최근 2건입니다</strong>
+          화면의 어제 대비는 항상 <strong>최신 두 날짜</strong>로 계산합니다. 영수증도 이 두 날짜에 봉인해야 재계산
+          값이 맞습니다. 봉인한 뒤에는 <code>RECORD_LOCKED=true</code>로 저장을 멈추세요.
         </div>
       )}
 
