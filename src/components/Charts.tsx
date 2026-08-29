@@ -119,10 +119,11 @@ export function Sparkline({ points, unit }: { points: Observation[]; unit: strin
   const W = 100;
   const H = 34;
   const x = (i: number) => (i / (points.length - 1)) * W;
-  const y = (v: number) => (flat ? H / 2 : H - ((v - min) / span) * (H - 4) - 2);
+  const PAD = 6;
+  const y = (v: number) => (flat ? H / 2 : H - ((v - min) / span) * (H - PAD * 2) - PAD);
 
-  const line = points.map((p, i) => `${x(i).toFixed(2)},${y(p.normalized_value).toFixed(2)}`).join(' ');
-  const area = `0,${H} ${line} ${W},${H}`;
+  const coords = points.map((p, i) => ({ cx: x(i), cy: y(p.normalized_value) }));
+  const line = coords.map((c) => `${c.cx.toFixed(2)},${c.cy.toFixed(2)}`).join(' ');
   const last = points[points.length - 1];
   const first = points[0];
   const drift = last.normalized_value - first.normalized_value;
@@ -143,8 +144,17 @@ export function Sparkline({ points, unit }: { points: Observation[]; unit: strin
         role="img"
         aria-label={`관측 ${points.length}건 시계열, 최소 ${fmt(min)} 최대 ${fmt(max)} ${unit}`}
       >
-        {!flat && <polygon points={area} className="spark-area" />}
         <polyline points={line} className="spark-line" vectorEffect="non-scaling-stroke" />
+        {coords.map((c, i) => (
+          <circle
+            key={i}
+            cx={c.cx}
+            cy={c.cy}
+            r={1.1}
+            className={i === coords.length - 1 ? 'spark-dot last' : 'spark-dot'}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
       </svg>
       <div className="spark-axis small">
         <span>{kstDateTime(first.observed_at)}</span>

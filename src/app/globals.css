@@ -261,8 +261,9 @@ a { color: var(--accent); }
   border: 2px solid var(--line);
   background: var(--bg);
 }
-.spark-line { fill: none; stroke: var(--accent); stroke-width: 2px; }
-.spark-area { fill: var(--accent); opacity: 0.16; }
+.spark-line { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linejoin: round; }
+.spark-dot { fill: var(--panel); stroke: var(--accent); stroke-width: 1.5px; }
+.spark-dot.last { fill: var(--accent); }
 .spark-axis { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
 
 .matrix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
