@@ -121,7 +121,7 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
         차이를 함께 적습니다.
       </p>
 
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: 14 }} aria-live="polite">
         {current ? (
           <>
             <span className="value">{current.normalized_value.toLocaleString('ko-KR')}</span>
@@ -170,9 +170,14 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
         </div>
       )}
 
-      {failure && (
-        <div className="notice">
-          <strong>{failure.label}</strong>
+      {failure && status && (
+        <div className="notice" data-error={status.error_code} role="status">
+          <strong>
+            <span className="icon" aria-hidden="true">
+              {failure.icon}
+            </span>
+            {failure.label}
+          </strong>
           {failure.message} {failure.nextAction}
           {board?.retry_after_seconds ? ` (${board.retry_after_seconds}초 뒤 재시도 권장)` : ''}
           <div className="small" style={{ marginTop: 6, color: 'inherit' }}>
@@ -181,9 +186,11 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
         </div>
       )}
 
-      <dl className="meta">
+      <div className="criteria">
+        <span className="legend">심사 6요소</span>
+        <dl className="meta">
         <dt>값</dt>
-        <dd>{current ? current.normalized_value.toLocaleString('ko-KR') : '—'}</dd>
+        <dd className="pixel">{current ? current.normalized_value.toLocaleString('ko-KR') : '—'}</dd>
         <dt>단위</dt>
         <dd>{current?.unit ?? '—'}</dd>
         <dt>출처</dt>
@@ -191,7 +198,7 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
           {current ? (
             <>
               {current.source_name}{' '}
-              <a href={current.source_url} target="_blank" rel="noreferrer noopener">
+              <a className="pixel" href={current.source_url} target="_blank" rel="noreferrer noopener">
                 {current.source_url}
               </a>
             </>
@@ -200,16 +207,20 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
           )}
         </dd>
         <dt>출처 시각</dt>
-        <dd>{kstDateTime(current?.source_time ?? null)}</dd>
+        <dd className="pixel">{kstDateTime(current?.source_time ?? null)}</dd>
         <dt>조회 시각</dt>
-        <dd>
+        <dd className="pixel">
           {kstDateTime(current?.last_fetched_at ?? board?.last_run_at ?? null)}
           {cacheLagSeconds !== null && (
             <span className="small"> · 캐시 지연 {cacheLagSeconds}초 (출처가 관측한 시각과의 차이)</span>
           )}
         </dd>
         <dt>기준 시간대</dt>
-        <dd>Asia/Seoul (KST, UTC+9)</dd>
+        <dd className="pixel">Asia/Seoul (KST, UTC+9)</dd>
+        </dl>
+      </div>
+
+      <dl className="meta" style={{ marginTop: 14 }}>
         <dt>교차 확인</dt>
         <dd>
           {crossCheck ? (
@@ -287,11 +298,11 @@ export default function LiveBoard({ title, initial, loadError }: Props) {
             ) : (
               board!.rows.map((row) => (
                 <tr key={row.record_id}>
-                  <td>{row.record_date}</td>
-                  <td>{row.normalized_value.toLocaleString('ko-KR')}</td>
+                  <td className="pixel">{row.record_date}</td>
+                  <td className="pixel">{row.normalized_value.toLocaleString('ko-KR')}</td>
                   <td>{row.unit}</td>
-                  <td>{kstDateTime(row.source_time)}</td>
-                  <td>{kstDateTime(row.last_fetched_at)}</td>
+                  <td className="pixel">{kstDateTime(row.source_time)}</td>
+                  <td className="pixel">{kstDateTime(row.last_fetched_at)}</td>
                 </tr>
               ))
             )}

@@ -27,13 +27,12 @@ export default function ReplayPanel() {
   }
 
   function play(id: string) {
-    setState((prev) => {
-      const next = runFixture(prev, FIXTURES[id]);
-      push(
-        `${id} → ${next.status?.freshness}/${next.status?.error_code} · 행 ${next.daily_readings.length}건 · 마지막 정상값 ${next.current_reading?.normalized_value ?? '없음'}`,
-      );
-      return next;
-    });
+    // 로그 append는 setState 업데이터 밖에서 합니다. 안에서 부르면 StrictMode가 두 번 찍습니다.
+    const next = runFixture(state, FIXTURES[id]);
+    setState(next);
+    push(
+      `${id} → ${next.status?.freshness}/${next.status?.error_code} · 행 ${next.daily_readings.length}건 · 마지막 정상값 ${next.current_reading?.normalized_value ?? '없음'}`,
+    );
   }
 
   function playSequence(ids: string[]) {
@@ -79,20 +78,20 @@ export default function ReplayPanel() {
       <h2 style={{ marginTop: 16 }}>fixture 하나씩</h2>
       <div className="row">
         {FIXTURE_ORDER.map((id) => (
-          <button key={id} onClick={() => play(id)}>
+          <button key={id} className="pixel" onClick={() => play(id)}>
             {id.replace('T04-', '')}
           </button>
         ))}
       </div>
 
       <h2 style={{ marginTop: 20 }}>현재 합성 상태</h2>
-      <dl className="meta">
+      <dl className="meta" aria-live="polite">
         <dt>freshness</dt>
-        <dd>{status?.freshness ?? '—'}</dd>
+        <dd className="pixel">{status?.freshness ?? '—'}</dd>
         <dt>error_code</dt>
-        <dd>{status?.error_code ?? '—'}</dd>
+        <dd className="pixel">{status?.error_code ?? '—'}</dd>
         <dt>일별 행 수</dt>
-        <dd>{state.daily_readings.length}</dd>
+        <dd className="pixel">{state.daily_readings.length}</dd>
         <dt>마지막 정상값</dt>
         <dd>
           {state.current_reading
@@ -109,9 +108,14 @@ export default function ReplayPanel() {
         </dd>
       </dl>
 
-      {failure && (
-        <div className="notice">
-          <strong>{failure.label}</strong>
+      {failure && status && (
+        <div className="notice" data-error={status.error_code} role="status">
+          <strong>
+            <span className="icon" aria-hidden="true">
+              {failure.icon}
+            </span>
+            {failure.label}
+          </strong>
           {failure.message} {failure.nextAction}
           {state.last_run?.retry_after_seconds
             ? ` (${state.last_run.retry_after_seconds}초 뒤 재시도 권장)`
@@ -148,9 +152,9 @@ export default function ReplayPanel() {
             ) : (
               state.daily_readings.map((row) => (
                 <tr key={row.record_id}>
-                  <td className="small">{row.record_id}</td>
-                  <td>{row.record_date}</td>
-                  <td>{row.normalized_value}</td>
+                  <td className="small pixel">{row.record_id}</td>
+                  <td className="pixel">{row.record_date}</td>
+                  <td className="pixel">{row.normalized_value}</td>
                   <td>{row.unit}</td>
                 </tr>
               ))

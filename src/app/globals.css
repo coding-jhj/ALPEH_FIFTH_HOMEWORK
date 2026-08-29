@@ -1,30 +1,65 @@
+/* T04 정보판 — 픽셀 레트로 테마.
+   각진 모서리 + 오프셋 그림자로 블록 느낌을 내고, 픽셀 폰트는 라틴 문자에만 씁니다.
+   실패 다섯 종류는 색이 서로 달라야 합니다 (T04-C12~C16). */
+
 :root {
-  --bg: #f6f7f9;
-  --panel: #ffffff;
-  --ink: #14181d;
-  --muted: #5d6772;
-  --line: #dfe3e8;
-  --accent: #0f766e;
-  --warn-bg: #fff6e5;
-  --warn-line: #e5b567;
-  --warn-ink: #8a5a00;
-  --up: #b42318;
-  --down: #175cd3;
+  --bg: #ded3c0;
+  --panel: #f4ece0;
+  --ink: #1e1a14;
+  --muted: #5c5346;
+  --line: #1e1a14;
+  --accent: #3f7a2a;
+  --accent-ink: #ffffff;
+  --shadow: #1e1a14;
+
+  --warn-bg: #fff2d6;
+  --warn-line: #8a5a00;
+  --warn-ink: #6b4500;
+
+  --up: #a51f14;
+  --down: #17458f;
+
+  /* 실패 다섯 갈래 — 서로 다른 색상군 */
+  --e-timeout: #a9631a;
+  --e-timeout-bg: #fdefda;
+  --e-auth: #a51f14;
+  --e-auth-bg: #fbe3e1;
+  --e-rate: #6b32a8;
+  --e-rate-bg: #efe4fb;
+  --e-offline: #4a4a4a;
+  --e-offline-bg: #e6e6e6;
+  --e-schema: #17458f;
+  --e-schema-bg: #e0e9fb;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1216;
-    --panel: #171b21;
-    --ink: #e8ecf1;
+    --bg: #12161b;
+    --panel: #1d232b;
+    --ink: #e9eef4;
     --muted: #9aa5b1;
-    --line: #2a313a;
-    --accent: #2dd4bf;
-    --warn-bg: #2b2213;
-    --warn-line: #7a5a1e;
-    --warn-ink: #f0c674;
-    --up: #ff8a80;
+    --line: #000000;
+    --accent: #6ec24a;
+    --accent-ink: #10240a;
+    --shadow: #000000;
+
+    --warn-bg: #2e2513;
+    --warn-line: #d5a13c;
+    --warn-ink: #f2cd82;
+
+    --up: #ff9b8f;
     --down: #8ab4ff;
+
+    --e-timeout: #f0b358;
+    --e-timeout-bg: #2e2413;
+    --e-auth: #ff9b8f;
+    --e-auth-bg: #33191a;
+    --e-rate: #c79bf5;
+    --e-rate-bg: #251a33;
+    --e-offline: #b9c0c8;
+    --e-offline-bg: #24282d;
+    --e-schema: #8ab4ff;
+    --e-schema-bg: #17223a;
   }
 }
 
@@ -34,84 +69,169 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  line-height: 1.55;
+  font-family: ui-sans-serif, system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  line-height: 1.6;
+  /* 블록 격자 배경 — 마인크래프트 느낌을 아주 옅게만 */
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-size: 16px 16px;
 }
 
-main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+main { max-width: 780px; margin: 0 auto; padding: 28px 16px 72px; }
 
-h1 { font-size: 20px; margin: 0 0 4px; }
-h2 { font-size: 15px; margin: 0 0 12px; color: var(--muted); font-weight: 600; }
+/* 픽셀 폰트는 숫자·영문 전용. 한글에 걸면 폰트가 없어 깨집니다. */
+.pixel {
+  font-family: var(--font-pixel), ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+h1 { font-size: 19px; margin: 0 0 6px; letter-spacing: -0.01em; }
+h2 {
+  font-size: 12px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 2px solid var(--line);
+  border-radius: 0;
   padding: 18px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  box-shadow: 5px 5px 0 var(--shadow);
 }
 
-.value { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; }
-.unit { font-size: 20px; font-weight: 600; color: var(--muted); margin-left: 6px; }
+.value {
+  font-family: var(--font-pixel), ui-monospace, Consolas, monospace;
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.unit { font-size: 18px; font-weight: 700; color: var(--muted); margin-left: 8px; }
 
 .badge {
   display: inline-block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border: 2px solid var(--line);
   vertical-align: middle;
+  box-shadow: 3px 3px 0 var(--shadow);
 }
-.badge.fresh { color: var(--accent); border-color: var(--accent); }
-.badge.stale { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
+.badge.fresh { background: var(--accent); color: var(--accent-ink); }
+.badge.stale { background: var(--warn-bg); color: var(--warn-ink); border-color: var(--warn-line); }
 
-.delta { font-size: 16px; font-weight: 600; margin-top: 4px; }
+.delta { font-size: 16px; font-weight: 700; margin-top: 10px; }
 .delta.increase { color: var(--up); }
 .delta.decrease { color: var(--down); }
 
-dl.meta { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; margin: 16px 0 0; font-size: 14px; }
-dl.meta dt { color: var(--muted); }
+/* 심사 6요소 — 값·단위·출처·출처 시각·조회 시각·기준 시간대 (T04-C04~C09) */
+.criteria {
+  border: 2px dashed var(--line);
+  padding: 14px 14px 12px;
+  margin-top: 18px;
+}
+.criteria > .legend {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 2px 8px;
+  margin-bottom: 10px;
+}
+
+dl.meta {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 14px;
+}
+dl.meta dt { color: var(--muted); font-weight: 600; }
 dl.meta dd { margin: 0; overflow-wrap: anywhere; }
 
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
-th { color: var(--muted); font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px; border-bottom: 2px solid var(--line); }
+th {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
 
 button {
   font: inherit;
-  padding: 7px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 13px;
+  border-radius: 0;
+  border: 2px solid var(--line);
   background: var(--panel);
   color: var(--ink);
   cursor: pointer;
+  box-shadow: 3px 3px 0 var(--shadow);
 }
-button:hover { border-color: var(--accent); }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-button:disabled { opacity: 0.5; cursor: default; }
+button:hover:not(:disabled) { background: var(--bg); }
+/* 눌리는 느낌 — 그림자만큼 밀어 넣습니다. */
+button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
+button.primary { background: var(--accent); border-color: var(--line); color: var(--accent-ink); }
+button:disabled { opacity: 0.45; cursor: default; box-shadow: none; transform: translate(3px, 3px); }
+
+/* 키보드 이동 경로를 반드시 보이게 둡니다. */
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .row { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .notice {
   background: var(--warn-bg);
-  border: 1px solid var(--warn-line);
+  border: 2px solid var(--warn-line);
   color: var(--warn-ink);
-  border-radius: 10px;
   padding: 12px 14px;
   font-size: 14px;
-  margin-top: 12px;
+  margin-top: 14px;
+  box-shadow: 4px 4px 0 var(--shadow);
 }
-.notice strong { display: block; margin-bottom: 2px; }
+.notice strong { display: block; margin-bottom: 3px; }
+.notice .icon { font-size: 15px; margin-right: 6px; }
+
+/* 실패 다섯 종류가 색으로도 구분됩니다. 색만으로 판단하지 않도록 아이콘·문구도 함께 둡니다. */
+.notice[data-error='timeout'] { background: var(--e-timeout-bg); border-color: var(--e-timeout); color: var(--e-timeout); }
+.notice[data-error='auth'] { background: var(--e-auth-bg); border-color: var(--e-auth); color: var(--e-auth); }
+.notice[data-error='rate_limit'] { background: var(--e-rate-bg); border-color: var(--e-rate); color: var(--e-rate); }
+.notice[data-error='offline'] { background: var(--e-offline-bg); border-color: var(--e-offline); color: var(--e-offline); }
+.notice[data-error='schema_error'] { background: var(--e-schema-bg); border-color: var(--e-schema); color: var(--e-schema); }
 
 .small { font-size: 12px; color: var(--muted); }
+.notice .small { color: inherit; opacity: 0.85; }
+
 pre {
   background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px;
+  border: 2px solid var(--line);
+  padding: 12px;
   font-size: 12px;
   overflow-x: auto;
+  font-variant-numeric: tabular-nums;
 }
 .scroll { overflow-x: auto; }
 a { color: var(--accent); }
+
+@media (max-width: 520px) {
+  .value { font-size: 34px; }
+  dl.meta { grid-template-columns: 92px 1fr; }
+}
+
+/* 움직임을 줄여 달라는 설정을 존중합니다. */
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled) { transform: none; }
+}

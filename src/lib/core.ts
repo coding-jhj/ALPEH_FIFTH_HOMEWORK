@@ -286,29 +286,34 @@ export function applyError(
 /** 실패 종류별 안내 문구와 다음 행동 — 다섯 종류가 서로 달라야 합니다 (T04-C12~C16) */
 export const FAILURE_COPY: Record<
   Exclude<ErrorCode, 'none'>,
-  { label: string; message: string; nextAction: string }
+  { label: string; message: string; nextAction: string; icon: string }
 > = {
   timeout: {
+    icon: '⏳',
     label: '느린 응답 (timeout)',
     message: '원천이 제한시간 안에 답하지 않았습니다.',
     nextAction: '잠시 뒤 다시 시도를 누르세요.',
   },
   auth: {
+    icon: '⛔',
     label: '원천 거절 (401/403)',
     message: '외부 데이터 원천이 접근을 거절했습니다.',
     nextAction: '원천의 접근 정책을 확인한 뒤 다시 시도하세요.',
   },
   rate_limit: {
+    icon: '🚦',
     label: '호출 제한 (429)',
     message: '외부 원천의 호출 한도를 넘었습니다.',
     nextAction: '안내된 대기 시간이 지난 뒤 다시 시도하세요.',
   },
   offline: {
+    icon: '📵',
     label: '오프라인',
     message: '네트워크에 닿지 못했습니다.',
     nextAction: '연결 상태를 확인한 뒤 다시 시도하세요.',
   },
   schema_error: {
+    icon: '🧩',
     label: '형식 변경 (schema)',
     message: '원천 응답의 형식이 약속과 달라졌습니다.',
     nextAction: '값 매핑을 점검해야 합니다. 다시 시도해도 같은 상태가 반복될 수 있습니다.',
