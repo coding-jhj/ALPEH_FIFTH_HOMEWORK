@@ -45,3 +45,6 @@ next-env.d.ts
 # ALEPH T04
 .env
 .env.local
+
+.vercel
+.env*

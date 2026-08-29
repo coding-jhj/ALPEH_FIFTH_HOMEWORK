@@ -13,8 +13,7 @@
 
 <img src="docs/board.png" width="620" alt="정보판 화면 — 값·단위·출처·출처 시각·조회 시각·기준 시간대가 한 화면에 있습니다">
 
-**[데모 열기](#)** · **[소스 보기](https://github.com/coding-jhj/MINECRART_DASHBOARD)**
-<sub>(데모 링크는 배포 후 채웁니다)</sub>
+**[데모 열기](https://t04-real-information-board.vercel.app)** · **[소스 보기](https://github.com/coding-jhj/MINECRART_DASHBOARD)**
 
 </div>
 
