@@ -113,11 +113,13 @@ export function Sparkline({ points, unit }: { points: Observation[]; unit: strin
   const values = points.map((p) => p.normalized_value);
   const min = Math.min(...values);
   const max = Math.max(...values);
+  // 값이 전부 같으면 선이 바닥에 붙어 빈 상자처럼 보입니다. 그럴 때는 가운데 높이로 그립니다.
+  const flat = max === min;
   const span = max - min || 1;
   const W = 100;
   const H = 34;
   const x = (i: number) => (i / (points.length - 1)) * W;
-  const y = (v: number) => H - ((v - min) / span) * (H - 4) - 2;
+  const y = (v: number) => (flat ? H / 2 : H - ((v - min) / span) * (H - 4) - 2);
 
   const line = points.map((p, i) => `${x(i).toFixed(2)},${y(p.normalized_value).toFixed(2)}`).join(' ');
   const area = `0,${H} ${line} ${W},${H}`;
@@ -130,7 +132,8 @@ export function Sparkline({ points, unit }: { points: Observation[]; unit: strin
       <div className="chart-head">
         <span className="pixel chart-big">{fmt(last.normalized_value)}</span>
         <span className="small">
-          최근 {points.length}건 · 최소 {fmt(min)} / 최대 {fmt(max)} {unit}
+          최근 {points.length}건 ·{' '}
+          {flat ? `${fmt(min)} ${unit}에서 변화 없음` : `최소 ${fmt(min)} / 최대 ${fmt(max)} ${unit}`}
         </span>
       </div>
       <svg
@@ -140,7 +143,7 @@ export function Sparkline({ points, unit }: { points: Observation[]; unit: strin
         role="img"
         aria-label={`관측 ${points.length}건 시계열, 최소 ${fmt(min)} 최대 ${fmt(max)} ${unit}`}
       >
-        <polygon points={area} className="spark-area" />
+        {!flat && <polygon points={area} className="spark-area" />}
         <polyline points={line} className="spark-line" vectorEffect="non-scaling-stroke" />
       </svg>
       <div className="spark-axis small">
