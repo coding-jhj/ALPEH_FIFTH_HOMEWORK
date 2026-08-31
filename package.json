@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "verify": "tsx scripts/verify-fixtures.ts",
+    "verify:brief": "tsx scripts/verify-brief.ts",
     "scan": "bash scripts/scan-secrets.sh"
   },
   "dependencies": {
