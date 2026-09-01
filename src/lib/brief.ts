@@ -39,11 +39,17 @@ function formatNumber(value: unknown): string {
   if (Number.isInteger(value)) return String(value);
   return value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
 }
+/** 한 줄 최대 길이. 3줄 전체가 계약의 3000자 상한 아래로 유지됩니다. */
+const LINE_MAX = 120;
+function clampLine(line: string): string {
+  if (line.length <= LINE_MAX) return line;
+  return `${line.slice(0, LINE_MAX - 1)}…`;
+}
 function normalizeLines(value: unknown): string[] | null {
   if (!Array.isArray(value) || value.length < 3) return null;
   const lines = value.slice(0, 3);
   if (!lines.every((line) => typeof line === 'string')) return null;
-  return lines.map((line) => line.trim());
+  return lines.map((line) => clampLine(line.trim()));
 }
 function comparisonLine(comparison: Comparison | null | undefined): string {
   if (!comparison) return '어제 대비 비교 데이터 부족';
@@ -115,6 +121,7 @@ function makeBrief(
   lines: string[],
   provider: string,
   fallback: boolean,
+  attempts: string[] = [],
   cached = false,
 ): Brief {
   return {
@@ -125,26 +132,52 @@ function makeBrief(
         '관측 0건',
       ],
     provider,
-    attempts: [],
+    attempts: [...attempts],
     fallback,
     cached,
     generated_at: new Date().toISOString(),
   };
 }
-async function makeRuleBrief(input: BriefInput): Promise<Brief> {
+async function makeRuleBrief(input: BriefInput, attempts: string[] = []): Promise<Brief> {
   let lines: string[];
   try {
     lines = await ruleProvider.generate(input, new AbortController().signal);
   } catch {
     lines = ['수집된 항목 없음', '규칙기반 요약을 만들 수 없습니다', '관측 0건'];
   }
-  return makeBrief(lines, ruleProvider.id, true);
+  return makeBrief(lines, ruleProvider.id, true, attempts);
+}
+/** 제한시간이 있으면 제공자별로 중단 신호를 보내고 그 시점에 실패로 처리합니다. */
+async function generateWithDeadline(
+  provider: BriefProvider,
+  input: BriefInput,
+  deadlineMs?: number,
+): Promise<string[]> {
+  const controller = new AbortController();
+  if (!finiteNumber(deadlineMs) || deadlineMs <= 0) {
+    return provider.generate(input, controller.signal);
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`${provider.id}: 제한시간 ${deadlineMs}ms 초과`));
+    }, deadlineMs);
+  });
+  try {
+    return await Promise.race([provider.generate(input, controller.signal), timeout]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }
 export function resetBriefCache(): void {
   briefCache.clear();
 }
 export function briefBanner(brief: Brief): string {
   const provider = typeof brief?.provider === 'string' ? brief.provider : 'unknown';
+  if (brief?.fallback === true || provider === ruleProvider.id) {
+    return '요약 폴백: 규칙기반';
+  }
   return `요약 제공자: ${provider}`;
 }
 export async function buildBrief(
@@ -157,23 +190,23 @@ export async function buildBrief(
     const cached = briefCache.get(cacheKey);
     if (cached) return { ...cached, cached: true };
   }
+  const attempts: string[] = [];
   try {
     const chain = opts?.chain ?? briefChain(process.env.BRIEF_PROVIDERS_ENV);
     const providers = opts?.providers ?? BRIEF_PROVIDERS;
     for (const providerId of chain) {
       const provider = providers[providerId];
       if (!provider || typeof provider.generate !== 'function') continue;
+      attempts.push(providerId);
       try {
-        const generated = await provider.generate(
-          input,
-          new AbortController().signal,
-        );
+        const generated = await generateWithDeadline(provider, input, opts?.deadlineMs);
         const lines = normalizeLines(generated);
         if (!lines) continue;
         const brief = makeBrief(
           lines,
           provider.id || providerId,
           providerId === 'rule',
+          attempts,
         );
         if (canCache) briefCache.set(cacheKey, brief);
         return brief;
@@ -184,7 +217,7 @@ export async function buildBrief(
   } catch {
     // 계약상 오류도 규칙기반 결과로 마무리합니다.
   }
-  const fallback = await makeRuleBrief(input);
+  const fallback = await makeRuleBrief(input, attempts);
   if (canCache) briefCache.set(cacheKey, fallback);
   return fallback;
 }
