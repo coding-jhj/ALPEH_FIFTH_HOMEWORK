@@ -26,7 +26,8 @@ npm ci
 npm run verify:brief
 ```
 
-4. 통과 검사
+## 4. 통과 검사
+
 
 * T05-T01
 * T05-T02
@@ -35,7 +36,8 @@ npm run verify:brief
 * T05-T07
 * T05-T09
 
-5. 남은 문제
+## 5. 남은 문제
+
 다음 4개는 아직 구현하지 않은 작업자 범위다.
 
 * T05-T03 → `attempts=[], 기대=["mockfail","mockok"]`
@@ -43,7 +45,8 @@ npm run verify:brief
 * T05-T08 → `전체 길이=7927, 기대=3000 이하`
 * T05-T10 → `banner="요약 제공자: rule", 기대: "요약 폴백: 규칙기반" 포함`
 
-6. 다음 행동
+## 6. 다음 행동
+
 `docs/t05-contract.md`의 2절 계약과 5절 작업 범위를 다시 확인한 뒤, `src/lib/brief.ts`에서 다음 AI B 범위만 이어서 구현한다.
 
 1. T05-T03: 시도한 제공자 id를 실제 시도 순서대로 `attempts`에 기록한다.
@@ -52,7 +55,8 @@ npm run verify:brief
 4. T05-T10: 폴백 배너에 `요약 폴백: 규칙기반` 문구를 포함한다.
 
 구현 후 `npm run verify:brief`를 다시 실행한다. 검사 10개와 기대값은 고정되어 있으므로 검사 파일이나 기대값을 수정하지 않는다.
-7. 건드리지 말 것
+## 7. 건드리지 말 것
+
 
 * `scripts/verify-brief.ts`
 * `scripts/verify-fixtures.ts`
