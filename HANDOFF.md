@@ -1,5 +1,11 @@
 BASE_COMMIT: b6043fa36a0edd7e01a4468f322d1c479a5e2533
 
+> (AI B 종료 후 추가된 설명 — AI B가 받은 원문에는 없던 줄입니다.)
+> 위 BASE_COMMIT은 **코드 기준 커밋**입니다. 이후 커밋 e87d46c·38854f1은 이 HANDOFF.md
+> 문서만 추가·정리한 것이라 src/lib/brief.ts 는 b6043fa와 동일합니다.
+> AI B 인계 시점의 저장소 HEAD: 38854f19dca6969e54aeb1f26686aee559b5108e
+> 자세한 내용은 docs/t05-handoff-gaps.md 참조.
+
 ## 1. 목표
 
 저장소: https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T05 이어받기 비교 보고서</title>
+<style>
+:root{
+  --bg:#fbfaf8; --panel:#ffffff; --ink:#1c1b19; --muted:#6b6862;
+  --line:#e5e1da; --accent:#1f6f5c; --accent-soft:#e8f2ef;
+  --pass:#1f6f5c; --fail:#a3402f; --hold:#8a7a3f;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181a; --panel:#1e2124; --ink:#e9e6e1; --muted:#9b968e;
+    --line:#31353a; --accent:#63c3a8; --accent-soft:#1c2c28;
+    --pass:#63c3a8; --fail:#e2836f; --hold:#d4bb6f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181a; --panel:#1e2124; --ink:#e9e6e1; --muted:#9b968e;
+  --line:#31353a; --accent:#63c3a8; --accent-soft:#1c2c28;
+  --pass:#63c3a8; --fail:#e2836f; --hold:#d4bb6f;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard",
+       "Malgun Gothic",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px; margin:0 auto; padding:48px 20px 96px}
+header{border-bottom:2px solid var(--ink); padding-bottom:20px; margin-bottom:40px}
+h1{font-size:26px; margin:0 0 8px; letter-spacing:-.02em}
+.sub{color:var(--muted); font-size:14px; margin:0}
+h2{
+  font-size:17px; margin:44px 0 14px; padding-bottom:8px;
+  border-bottom:1px solid var(--line); letter-spacing:-.01em;
+}
+h3{font-size:14px; margin:24px 0 8px; color:var(--muted); font-weight:600}
+p{margin:0 0 12px}
+code,.mono{font-family:var(--mono); font-size:12.5px}
+code{background:var(--accent-soft); padding:1px 5px; border-radius:3px; word-break:break-all}
+.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 0 12px}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top}
+th{background:var(--accent-soft); font-weight:600; white-space:nowrap}
+td.num{text-align:right; font-family:var(--mono); white-space:nowrap}
+.pass{color:var(--pass); font-weight:700}
+.fail{color:var(--fail); font-weight:700}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px 20px; margin:0 0 14px}
+.note{border-left:3px solid var(--accent); padding:10px 14px; background:var(--accent-soft); border-radius:0 6px 6px 0; font-size:13.5px; margin:0 0 14px}
+pre{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px; overflow-x:auto; font-family:var(--mono); font-size:12px; line-height:1.6; margin:0 0 14px}
+ol,ul{margin:0 0 12px; padding-left:22px}
+li{margin:0 0 5px}
+.tl{list-style:none; padding:0; margin:0}
+.tl li{
+  position:relative; padding:0 0 18px 26px; border-left:2px solid var(--line); margin:0;
+}
+.tl li:last-child{border-left-color:transparent; padding-bottom:0}
+.tl li::before{
+  content:""; position:absolute; left:-6px; top:5px; width:10px; height:10px;
+  border-radius:50%; background:var(--accent);
+}
+.tl .when{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.tl .what{font-weight:600}
+a{color:var(--accent)}
+.reveal{margin-top:56px; border:1px dashed var(--line); border-radius:8px; padding:20px; background:var(--panel)}
+.reveal h2{margin-top:0; border:0; padding:0}
+footer{margin-top:56px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>대화가 끊겨도 이어지는 프로젝트</h1>
+  <p class="sub">두 AI가 같은 검사 10개를 이어서 통과시킨 기록 · ALEPH T05 · 2026-09-01</p>
+</header>
+
+<h2>한 줄 요약</h2>
+<p>
+마인크래프트 서버 정보판에 <strong>멀티 LLM 요약 브리핑 + 제공자 폴백</strong> 기능을 붙였다.
+착수 전에 검사 10개와 사용 상한을 고정했고, <strong>AI A가 6/10에서 멈춘 뒤</strong>
+<strong>AI B가 대화 전문 없이 인수인계 문서 한 장만으로 이어받아 10/10</strong>을 만들었다.
+</p>
+
+<h2>무엇을 만들었나</h2>
+<div class="card">
+  <p style="margin:0 0 10px">
+    기존 정보판은 접속자 수를 <code>mcstatus.io</code>에서 가져오고, 실패하면 <code>mcsrvstat.us</code>로
+    갈아타고, 둘 다 실패하면 "데이터 안 옴"을 솔직히 표시했다. <strong>한 곳만 믿지 않는다</strong>는 구조다.
+  </p>
+  <p style="margin:0">
+    이번 개선은 같은 발상을 LLM에 적용한다. 요약 3줄을 만들 때
+    <code class="mono">gemini → groq → rule</code> 순서로 시도하고, 앞이 실패하면 다음으로 넘어가고,
+    전부 실패하면 LLM 없이 계산만으로 3줄을 만든 뒤 화면에 <code>요약 폴백: 규칙기반</code>을 표시한다.
+    <strong>AI가 전부 죽어도 카드는 비지 않는다.</strong>
+  </p>
+</div>
+
+<h2>이름을 가린 비교표</h2>
+<div class="scroll">
+<table>
+<thead><tr>
+  <th>항목</th><th>AI A</th><th>AI B</th>
+</tr></thead>
+<tbody>
+  <tr><td>실제 작업시간</td><td class="num">53분</td><td class="num">4분</td></tr>
+  <tr><td>공통 시간 상한</td><td class="num">120분</td><td class="num">120분</td></tr>
+  <tr><td>실제 요청·호출 수</td><td class="num">1회</td><td class="num">1회</td></tr>
+  <tr><td>공통 요청 상한</td><td class="num">60회</td><td class="num">60회</td></tr>
+  <tr><td>검사 실행 회차</td><td class="num">1회차</td><td class="num">3회차</td></tr>
+  <tr><td>오류 회차</td><td class="num">1</td><td class="num">1</td></tr>
+  <tr><td>검사 통과 수</td><td class="num">6 / 10</td><td class="num">10 / 10</td></tr>
+  <tr><td>소스 변경 (src/, 생성물·lockfile 제외)</td><td class="num">+190 / −0</td><td class="num">+42 / −9</td></tr>
+</tbody>
+</table>
+</div>
+<div class="note">
+  <strong>오류 회차 세는 법</strong> — <code>npm run verify:brief</code> 1회 실행 = 1회차.
+  10개 중 하나라도 FAIL이면 그 회차를 오류 1로 센다.
+  AI B의 1회차는 인계받은 상태를 그대로 확인한 6/10이라 오류 1로 집계했다.
+</div>
+<div class="note">
+  <strong>맡은 일이 다르다.</strong> 두 AI는 같은 난이도의 일을 하지 않았다.
+  AI A는 골격 6개(설계 위주), AI B는 마무리 4개(디버깅 위주)를 맡도록 <em>착수 전에</em> 나눠 두었다.
+  이 표는 모델 우열이 아니라 각자 맡은 구간의 실측값이다.
+</div>
+
+<h2>고정 소스 버전 (재작업량 산출용)</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>지점</th><th>commit</th><th>시각 (KST)</th></tr></thead>
+<tbody>
+  <tr><td>AI A 시작</td><td><a class="mono" href="https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK/commit/a8e1ce7d67b2f02701e4de5e3f08dbfb366747b9">a8e1ce7d67b2f02701e4de5e3f08dbfb366747b9</a></td><td class="mono">08-31 20:46</td></tr>
+  <tr><td>AI A 종료</td><td><a class="mono" href="https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK/commit/b6043fa36a0edd7e01a4468f322d1c479a5e2533">b6043fa36a0edd7e01a4468f322d1c479a5e2533</a></td><td class="mono">09-01 09:47</td></tr>
+  <tr><td>AI B 시작</td><td><a class="mono" href="https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK/commit/38854f19dca6969e54aeb1f26686aee559b5108e">38854f19dca6969e54aeb1f26686aee559b5108e</a></td><td class="mono">09-01 10:28</td></tr>
+  <tr><td>AI B 종료</td><td><a class="mono" href="https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK/commit/f61552af3d81c10bab0f08b119349c5b8655ca93">f61552af3d81c10bab0f08b119349c5b8655ca93</a></td><td class="mono">09-01 10:37</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>작업 순서</h2>
+<ul class="tl">
+  <li><span class="when">08-31 20:46</span><br><span class="what">착수 전 고정</span> — 검사 10개 · 상한 120분/60회 · A/B 분할선을 커밋. 기준선 실행 0/10</li>
+  <li><span class="when">09-01 09:32</span><br><span class="what">AI A 시작</span> — 최초 요청 투입</li>
+  <li><span class="when">09-01 09:47</span><br><span class="what">AI A 종료</span> — 6/10, 첫 실패 T05-T03. 계획된 중단 지점</li>
+  <li><span class="when">09-01 10:28</span><br><span class="what">AI A 인수인계</span> — HANDOFF.md 7항목 작성. 빈 폴더 재현 검증 통과</li>
+  <li><span class="when">09-01 10:33</span><br><span class="what">AI B 시작</span> — 저장소 URL + HANDOFF.md 전문만 수령. 대화 전문 미제공</li>
+  <li><span class="when">09-01 10:37</span><br><span class="what">AI B 종료</span> — 10/10</li>
+</ul>
+
+<h2>고정 검사 10개</h2>
+<p>착수 전에 고정했고 이후 <strong>삭제 0건 · 완화 0건 · 기대값 변경 0건</strong>이다.
+검사 파일은 <code>scripts/verify-brief.ts</code>, 실행은 <code>npm run verify:brief</code>.
+진짜 LLM 대신 가짜 제공자(<code>mockok</code> 성공 / <code>mockfail</code> 실패 / <code>mocktimeout</code> 지연)를
+주입하므로 <strong>네트워크 없이 몇 번을 돌려도 같은 결과</strong>가 나온다.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>ID</th><th>입력</th><th>관찰 가능한 기대값</th><th>A</th><th>B</th></tr></thead>
+<tbody>
+<tr><td class="mono">T05-T01</td><td>정상 2일치 + 체인 <code>mockok</code></td><td>3줄, 각 줄 1~120자</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T02</td><td>위와 동일</td><td><code>provider="mockok"</code>, <code>fallback=false</code></td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T03</td><td>체인 <code>mockfail,mockok</code></td><td><code>attempts=["mockfail","mockok"]</code></td><td class="fail">FAIL</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T04</td><td>체인 <code>mockfail,mockfail2</code></td><td><code>provider="rule"</code>, <code>fallback=true</code>, 예외 없음</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T05</td><td>빈 체인</td><td><code>provider="rule"</code>, <code>fallback=true</code></td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T06</td><td><code>mocktimeout,mockok</code> + deadline 800ms</td><td>3000ms 미만, <code>provider="mockok"</code></td><td class="fail">FAIL</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T07</td><td>데이터 0건 <em>(경계)</em></td><td>3줄, 첫 줄에 <code>수집된 항목 없음</code></td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T08</td><td>관측 200건 <em>(경계)</em></td><td>3줄, 전체 3000자 이하, 5초 내</td><td class="fail">FAIL</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T09</td><td>같은 <code>cacheKey</code>로 2회</td><td>2회차 <code>cached=true</code>, 제공자 호출 1회</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+<tr><td class="mono">T05-T10</td><td>폴백 상태</td><td>배너에 <code>요약 폴백: 규칙기반</code>, 비밀값 0건</td><td class="fail">FAIL</td><td class="pass">PASS</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>AI A가 남긴 인수인계 문서</h2>
+<p>AI B에게 제공한 것은 <strong>저장소 주소와 아래 문서 전문, 딱 두 개</strong>다. 이전 대화는 제공하지 않았다.</p>
+<p class="mono" style="color:var(--muted)">sha256 6ad1376c9be346bcf406934afc25a5e40b4d40383f2778099949eff0c5560b79</p>
+<pre>BASE_COMMIT: b6043fa36a0edd7e01a4468f322d1c479a5e2533
+
+## 1. 목표
+저장소: https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK
+마인크래프트 서버 접속자 수 정보판의 멀티 LLM 요약 브리핑 기능인 src/lib/brief.ts 를
+docs/t05-contract.md 의 2절 계약에 맞게 구현한다. 계약의 5절에서 정한 작업자별 범위를
+지키고, 6절의 금지 파일과 기존 T04 폴백·상태 로직은 변경하지 않는다.
+
+## 2. 현재 상태
+현재 코드는 AI A 범위의 6/10 구현 상태다. src/lib/brief.ts 에는 다음이 구현되어 있다.
+- BriefInput, BriefProvider, Brief 인터페이스
+- 규칙기반 rule 제공자와 BRIEF_PROVIDERS
+- 쉼표로 구분된 제공자 체인을 배열로 변환하는 briefChain
+- 제공자 순차 시도와 전체 실패 시 규칙기반 폴백
+- cacheKey 기반 브리핑 캐시와 resetBriefCache
+- 기본 제공자 배너 골격
+현재 검사 결과: 통과 6/10, 첫 실패 검사 T05-T03
+
+## 3. 실행 명령
+npm ci
+npm run verify:brief
+
+## 4. 통과 검사
+T05-T01 / T05-T02 / T05-T04 / T05-T05 / T05-T07 / T05-T09
+
+## 5. 남은 문제
+T05-T03 → attempts=[], 기대=["mockfail","mockok"]
+T05-T06 → 소요=5006ms, 기대=3000ms 미만 (deadline 미적용)
+T05-T08 → 전체 길이=7927, 기대=3000 이하
+T05-T10 → banner="요약 제공자: rule", 기대: "요약 폴백: 규칙기반" 포함
+
+## 6. 다음 행동
+docs/t05-contract.md 의 2절 계약과 5절 범위를 확인한 뒤 src/lib/brief.ts 에서
+AI B 범위만 이어서 구현한다.
+1. T05-T03: 시도한 제공자 id를 실제 시도 순서대로 attempts 에 기록한다.
+2. T05-T06: deadlineMs 를 제공자별 제한시간으로 적용하고 중단 신호를 전달한다.
+3. T05-T08: 관측 200건 경계에서 브리핑 전체 길이를 3000자 이하로 절단한다.
+4. T05-T10: 폴백 배너에 "요약 폴백: 규칙기반" 문구를 포함한다.
+구현 후 npm run verify:brief 를 다시 실행한다. 검사 10개와 기대값은 고정되어 있으므로
+검사 파일이나 기대값을 수정하지 않는다.
+
+## 7. 건드리지 말 것
+scripts/verify-brief.ts · scripts/verify-fixtures.ts · src/fixtures/* · public/fixtures/*
+src/lib/core.ts · src/lib/replay.ts · src/lib/source.ts · src/lib/store.ts
+기존 T04 폴백·상태 로직 전체
+검사 파일을 고치거나 기대값을 바꾸지 않는다.</pre>
+
+<h3>새 폴더 재현 결과</h3>
+<p>인수인계 문서를 확정하기 전에, 저장소를 <strong>빈 폴더에 새로 clone</strong>해서
+문서의 실행 명령만 그대로 따라갔다. <code>npm ci</code> → <code>npm run verify:brief</code> →
+<strong>통과 6/10, 첫 실패 T05-T03</strong>이 그대로 재현됐다.</p>
+
+<h2>인수인계 누락 기록</h2>
+<div class="card">
+  <p style="margin:0 0 8px"><strong>누락 1건.</strong> 작업을 막지는 않았다. AI B가 스스로 발견했다.</p>
+  <p style="margin:0 0 8px">
+    문서의 <code>BASE_COMMIT</code>은 <code>b6043fa</code>(코드 커밋)인데, AI B가 clone한 시점의
+    저장소 HEAD는 <code>38854f1</code>이었다. 사이 두 커밋이 모두 문서 커밋이라
+    <code>src/lib/brief.ts</code> 코드는 동일했고 실행에는 영향이 없었다.
+  </p>
+  <p style="margin:0">
+    <strong>수정 전</strong> <code>BASE_COMMIT: b6043fa…</code> →
+    <strong>수정 후</strong> 같은 값에 "코드 기준 커밋이며 인계 시점 HEAD는 38854f1"이라는 설명 추가.
+    AI B가 실제로 받은 문서는 sha256 그대로 보존하고, 수정은 AI B 종료 뒤 별도 커밋으로 남겼다.
+    전문은 <code>docs/t05-handoff-gaps.md</code>에 있다.
+  </p>
+</div>
+
+<h2>다음 작업의 도구 선택 기준</h2>
+<div class="note" style="font-size:15px">
+  <strong>검사가 먼저 고정돼 있으면 어느 모델이든 쓰고, 검사를 만드는 단계와 실패를 파고드는 단계에는
+  더 강한 모델을 쓴다.</strong>
+</div>
+
+<h2>짧은 확인 방법</h2>
+<div class="card">
+  <p><strong>① 어디로 가나요</strong><br>
+  이 페이지, 그리고 소스 저장소
+  <a href="https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK">github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK</a></p>
+
+  <p><strong>② 3단계 이내 무엇을 하나요</strong><br>
+  1) <code>git clone https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK.git</code><br>
+  2) <code>npm ci</code><br>
+  3) <code>npm run verify:brief</code></p>
+
+  <p><strong>③ 무엇이 보이면 통과인가요</strong><br>
+  마지막 줄에 <code class="pass">통과 10/10</code>. 위 비교표의 AI A 6/10 · AI B 10/10과 일치.
+  커밋 4개가 A 시작 → A 종료 → B 시작 → B 종료 순서로 보임.</p>
+
+  <p style="margin:0"><strong>④ 안 될 때 무엇이 보이나요</strong><br>
+  <code class="fail">통과 6/10</code>과 <code>첫 실패 검사: T05-T03</code>이 보이면 AI B 커밋이 빠진 상태다
+  (<code>git log -1</code>이 <code>f61552a</code>인지 확인). Node 미설치면
+  <code>npm: command not found</code>, 설치 미완료면
+  <code>Cannot find module '.../src/lib/brief'</code>가 보인다.</p>
+</div>
+
+<h2>AI와 나의 판단</h2>
+<div class="card">
+  <p><strong>① AI에게 맡긴 일</strong><br>
+  <code>src/lib/brief.ts</code> 구현(AI A 6개 · AI B 4개), 인수인계 문서 초안 작성,
+  고정 검사 10개의 코드화, 이 보고서 페이지 작성.</p>
+
+  <p><strong>② 내가 직접 판단한 일</strong><br>
+  개선 주제 선정(멀티 LLM 폴백), 검사 10개와 기대값·경계값 확정,
+  A/B 분할선을 6:4로 나눠 A가 10/10을 만들지 못하게 막은 것,
+  상한 120분/60회 결정, 인수인계 문서를 빈 폴더에서 실제 재현해 검증한 것,
+  AI B의 10/10 보고를 믿지 않고 같은 명령을 직접 다시 돌려 확인한 것.</p>
+
+  <p style="margin:0"><strong>③ AI 제안을 따르지 않은 일</strong><br>
+  진행 보조 AI가 인수인계 문서의 마크다운 서식이 어긋난 것을
+  "AI A가 쓴 것으로 두고 손대지 말자"고 제안했으나 따르지 않았다.
+  서식만 고치고 <strong>수정 사실을 별도 커밋과 이 보고서에 명시</strong>하는 쪽을 택했다.
+  읽는 사람이 문서를 실제로 쓸 수 있는 것이 더 중요하고, 누가 무엇을 고쳤는지는
+  커밋으로 남기면 증거가 흐려지지 않는다고 판단했다.</p>
+</div>
+
+<div class="reveal">
+  <h2>판정 이후 — 가린 이름 공개</h2>
+  <p style="margin:0 0 8px">여기부터는 위 비교표의 판정이 끝난 뒤 읽을 내용이다.</p>
+  <ul style="margin:0">
+    <li><strong>AI A</strong> = GPT (OpenAI) — 골격 6개 담당</li>
+    <li><strong>AI B</strong> = Claude Opus, 빈 컨텍스트 새 세션 — 마무리 4개 담당</li>
+  </ul>
+  <p style="margin:10px 0 0; color:var(--muted); font-size:13.5px">
+    서로 다른 서비스다. AI B에게는 저장소 주소와 인수인계 문서 전문만 전달했고
+    이전 대화는 어떤 형태로도 제공하지 않았다.
+  </p>
+</div>
+
+<footer>
+  개인정보·비밀값 0건 · 대화 전문 미포함 · 로그인 없이 열람 가능<br>
+  소스: <a href="https://github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK">github.com/coding-jhj/ALPEH_FIFTH_HOMEWORK</a>
+</footer>
+
+</div>
+</body>
+</html>
